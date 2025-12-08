@@ -654,7 +654,7 @@ public class UpdateService extends Service implements OnSharedPreferenceChangeLi
         mNotificationManager.notify(
                 NOTIFICATION_UPDATE,
                 (new Notification.Builder(this, UPDATE_NOTIFICATION_CHANNEL_ID))
-                .setSmallIcon(R.drawable.stat_notify_update)
+                .setSmallIcon(R.drawable.ic_system_update)
                 .setContentTitle(readyToFlash
                         ? getString(R.string.notify_title_flash)
                         : getString(R.string.notify_title_download))
@@ -667,7 +667,7 @@ public class UpdateService extends Service implements OnSharedPreferenceChangeLi
 
     private void newFlashNotification(String filename) {
         mFlashNotificationBuilder = new Notification.Builder(this, INSTALL_NOTIFICATION_CHANNEL_ID);
-        mFlashNotificationBuilder.setSmallIcon(R.drawable.stat_notify_update)
+        mFlashNotificationBuilder.setSmallIcon(R.drawable.ic_system_update)
                 .setContentTitle(getString(R.string.state_action_ab_flash))
                 .setShowWhen(true)
                 .setOngoing(true)
@@ -700,7 +700,7 @@ public class UpdateService extends Service implements OnSharedPreferenceChangeLi
             cPI
         ).build());
         mDownloadNotificationBuilder = new Notification.Builder(this, INSTALL_NOTIFICATION_CHANNEL_ID);
-        mDownloadNotificationBuilder.setSmallIcon(R.drawable.stat_notify_update)
+        mDownloadNotificationBuilder.setSmallIcon(R.drawable.ic_system_update)
                 .setContentTitle(title)
                 .setShowWhen(false)
                 .setOngoing(true)
@@ -721,7 +721,7 @@ public class UpdateService extends Service implements OnSharedPreferenceChangeLi
 
         Notification.Builder builder =
                 (new Notification.Builder(this, INSTALL_NOTIFICATION_CHANNEL_ID))
-                .setSmallIcon(R.drawable.stat_notify_update)
+                .setSmallIcon(R.drawable.ic_system_update)
                 .setContentTitle(getString(R.string.state_action_ab_finished))
                 .setShowWhen(true)
                 .setContentIntent(getNotificationIntent(false));
@@ -743,7 +743,7 @@ public class UpdateService extends Service implements OnSharedPreferenceChangeLi
             mNotificationManager.notify(
                     NOTIFICATION_ERROR,
                     (new Notification.Builder(this, UPDATE_NOTIFICATION_CHANNEL_ID))
-                    .setSmallIcon(R.drawable.stat_notify_error)
+                    .setSmallIcon(R.drawable.ic_system_update)
                     .setContentTitle(getString(R.string.notify_title_error))
                     .setContentText(errorStateString)
                     .setShowWhen(true)
@@ -923,17 +923,16 @@ public class UpdateService extends Service implements OnSharedPreferenceChangeLi
      * @param fn - file name
      * @return true if sha256sum matches the file
      */
-    private boolean checkBuildSHA256Sum(String url, String fn) {
-        final String latestSUM = getLatestSHA256Sum(url);
+    private boolean checkBuildSHA256Sum(String sha256, String fn) {
+        final String latestSUM = sha256;
         final File file = new File(fn);
         if (latestSUM != null){
             try {
                 String fileSUM = getFileSHA256(file,
                         getSUMProgress(State.ACTION_CHECKING_SUM, file.getName()));
                 boolean sumCheck = fileSUM.equals(latestSUM);
-                Logger.d("fileSUM=" + fileSUM + " latestSUM=" + latestSUM);
                 if (sumCheck) return true;
-                Logger.i("fileSUM check failed for " + url);
+                Logger.i("fileSUM check failed");
             } catch(Exception e) {
                 // WTH knows what can comes from the server
             }
@@ -1337,21 +1336,6 @@ public class UpdateService extends Service implements OnSharedPreferenceChangeLi
         }
     }
 
-    private String getLatestSHA256Sum(String sumUrl) {
-        if (mIsUrlOverride) {
-            sumUrl = mSumUrlOvr;
-        }
-        String latestSum = Download.asString(sumUrl);
-        if (latestSum != null) {
-            String sumPart = latestSum;
-            while (sumPart.length() > 64)
-                sumPart = sumPart.substring(0, sumPart.length() - 1);
-            Logger.d("getLatestSHA256Sum - sha256sum = " + sumPart);
-            return sumPart;
-        }
-        return null;
-    }
-
     private static float getProgress(long current, long total) {
         if (total == 0)
             return 0f;
@@ -1484,7 +1468,7 @@ public class UpdateService extends Service implements OnSharedPreferenceChangeLi
                             if (build.has("url"))
                                 urlOverride = build.getString("url");
                             if (build.has("sha256url"))
-                                sumOverride = build.getString("sha256url");
+                                sumOverride = build.getString("sha256");
                             if (build.has("datetime"))
                                 buildDateTime = build.getLong("datetime");
                             if (build.has("payload")) {
@@ -1513,7 +1497,7 @@ public class UpdateService extends Service implements OnSharedPreferenceChangeLi
                             if (urlOverride != null && !urlOverride.equals(""))
                                 Logger.d("url= " + urlOverride);
                             if (sumOverride != null && !sumOverride.equals("")) {
-                                Logger.d("sha256 url= " + sumOverride);
+                                Logger.d("sha256 = " + sumOverride);
                             }
                             if (buildDateTime != null) {
                                 Logger.d("datetime= " + sumOverride);
@@ -1542,17 +1526,8 @@ public class UpdateService extends Service implements OnSharedPreferenceChangeLi
                     return;
                 }
 
-                String latestFetch;
-                String latestFetchSUM;
-                if (urlOverride == null || sumOverride == null) {
-                    latestFetch = mConfig.getUrlBase() +
-                            latestBuild + mConfig.getUrlSuffix();
-                    latestFetchSUM = mConfig.getUrlBaseSum() +
-                            latestBuild + ".sha256sum" + mConfig.getUrlSuffix();
-                } else {
-                    latestFetch = urlOverride;
-                    latestFetchSUM = sumOverride;
-                }
+                String latestFetch = urlOverride;
+                String latestFetchSUM = sumOverride;
                 Logger.d("latest build for device " + mConfig.getDevice() + " is " + latestFetch);
 
                 boolean updateAvailable = latestBuild != null && forceFlash;
@@ -1596,7 +1571,7 @@ public class UpdateService extends Service implements OnSharedPreferenceChangeLi
                 mPrefs.edit().putString(PREF_LATEST_CHANGELOG, changelog).commit();
 
                 if (checkExistingBuild(latestBuild, latestFetchSUM)) return;
-                
+
                 final long size = Download.getSize(latestFetch);
                 mPrefs.edit().putLong(PREF_DOWNLOAD_SIZE, size).commit();
 
@@ -1620,7 +1595,7 @@ public class UpdateService extends Service implements OnSharedPreferenceChangeLi
 
                 if (checkOnly == PREF_AUTO_DOWNLOAD_FULL) {
                     if (userInitiated || mNetworkState.getState()) {
-                        final String latestSUM = getLatestSHA256Sum(latestFetchSUM);
+                        final String latestSUM = latestFetchSUM;
                         if (latestSUM != null) {
                             downloadBuild(latestFetch, latestSUM, latestBuild);
                         } else {

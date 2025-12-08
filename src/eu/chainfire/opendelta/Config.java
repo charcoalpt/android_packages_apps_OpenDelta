@@ -59,16 +59,12 @@ public class Config {
     private final String filename_base;
     private final String path_base;
     private final String path_flash_after_update;
-    private final String url_base;
-    private final String url_base_sum;
-    private final String url_base_suffix;
     private final boolean support_ab_perf_mode;
     private final boolean use_twrp;
     private final String filename_base_prefix;
     private final String url_branch_name;
     private final String url_base_json;
     private final String url_api_history;
-    private final String url_cert_json;
     private final String android_version;
     private final long build_time;
 
@@ -90,11 +86,6 @@ public class Config {
                 File.separator);
         path_flash_after_update = String.format(Locale.ENGLISH, "%s%s%s",
                 path_base, "FlashAfterUpdate", File.separator);
-        url_base = String.format(
-                res.getString(R.string.url_base_full), property_device);
-        url_base_sum = String.format(
-                res.getString(R.string.url_base_full_sum), property_device);
-        url_base_suffix = res.getString(R.string.url_base_suffix);
         support_ab_perf_mode = res.getBoolean(R.bool.support_ab_perf_mode);
         use_twrp = res.getBoolean(R.bool.use_twrp);
         url_branch_name = res.getString(R.string.url_branch_name);
@@ -104,9 +95,6 @@ public class Config {
         url_api_history = String.format(
                 res.getString(R.string.url_api_history),
                 url_branch_name, property_device, property_device);
-        url_cert_json = String.format(
-                res.getString(R.string.url_cert_json),
-                url_branch_name, property_device);
         android_version = Build.VERSION.RELEASE;
         filename_base_prefix = String.format(Locale.ENGLISH,
                 res.getString(R.string.filename_base), android_version);
@@ -118,12 +106,9 @@ public class Config {
         Logger.d("filename_base_prefix: %s", filename_base_prefix);
         Logger.d("path_base: %s", path_base);
         Logger.d("path_flash_after_update: %s", path_flash_after_update);
-        Logger.d("url_base: %s", url_base);
-        Logger.d("url_base_sum: %s", url_base_sum);
         Logger.d("url_branch_name: %s", url_branch_name);
         Logger.d("url_base_json: %s", url_base_json);
         Logger.d("url_api_history: %s", url_api_history);
-        Logger.d("url_cert_json: %s", url_cert_json);
         Logger.d("use_twrp: %d", use_twrp ? 1 : 0);
         Logger.d("build_time: %d", build_time);
     }
@@ -138,18 +123,6 @@ public class Config {
 
     public String getPathFlashAfterUpdate() {
         return path_flash_after_update;
-    }
-
-    public String getUrlBase() {
-        return url_base;
-    }
-
-    public String getUrlBaseSum() {
-        return url_base_sum;
-    }
-
-    public String getUrlSuffix() {
-        return url_base_suffix;
     }
 
     public boolean getUseTWRP() {
@@ -242,10 +215,6 @@ public class Config {
 
     public String getUrlAPIHistory() {
         return url_api_history;
-    }
-
-    public String getUrlCertJson() {
-        return url_cert_json;
     }
 
     public String getAndroidVersion() {
